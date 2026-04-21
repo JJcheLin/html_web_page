@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">   
+    <title>我們的旅程</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💖</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollToPlugin.min.js"></script>
+
+    <style>
+        :root {
+            --accent-pink: #d14769;       /* 較深的玫瑰粉，用於強調與標題 */
+            --glass-bg: rgba(255, 255, 255, 0.35); /* 明亮透白，稍微降低透明度讓流光透出來 */
+            --text-main: #4a4a4a;         /* 深灰色文字 */
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            /* 1. 動態流光漸層背景：設置四種柔和粉色交替 */
+            background: linear-gradient(-45deg, #fbedef, #ffebf0);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite; /* 15秒一輪的平滑流動 */
+            color: var(--text-main);
+            font-family: "LXGW WenKai TC", 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* 背景流動動畫關鍵影格 */
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 背景：動態光斑 Canvas */
+        #starfield {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            /* 加上一點模糊濾鏡讓光斑更夢幻 */
+            filter: blur(1px); 
+        }
+
+        /* 佈局設計 */
+        .container { display: flex; }
+
+        /* 左側：航行導覽軌跡 */
+        .timeline-nav {
+            width: 100px;
+            height: 100vh;
+            position: fixed;
+            left: 0; top: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            border-right: 2px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .nav-line {
+            width: 2px;
+            height: 70vh;
+            background: linear-gradient(to bottom, transparent, #ff99ac, transparent);
+            position: relative;
+        }
+
+        .nav-node {
+            width: 14px; height: 14px;
+            background: #fff;
+            border: 2px solid #ff99ac;
+            border-radius: 50%;
+            margin: 40px 0;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            left: -6px;
+        }
+
+        /* 3. 節點呼吸心跳燈效 */
+        @keyframes heartbeat {
+            0% { box-shadow: 0 0 10px rgba(209, 71, 105, 0.4); transform: scale(1.5); }
+            50% { box-shadow: 0 0 25px rgba(209, 71, 105, 0.8); transform: scale(1.6); }
+            100% { box-shadow: 0 0 10px rgba(209, 71, 105, 0.4); transform: scale(1.5); }
+        }
+
+        .nav-node.active {
+            background: var(--accent-pink);
+            border-color: var(--accent-pink);
+            animation: heartbeat 2s infinite ease-in-out; /* 套用呼吸燈 */
+        }
+
+        .nav-node::after {
+            content: attr(data-year);
+            position: absolute;
+            left: 25px; top: -5px;
+            font-size: 0.85rem;
+            color: #777;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        /* 右側：回憶空間 */
+        .main-space {
+            margin-left: 100px;
+            width: calc(100% - 100px);
+        }
+
+        .scene {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 10%;
+            perspective: 1200px;
+        }
+
+        /* 毛玻璃內容卡片 */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            padding: 50px;
+            border-radius: 30px;
+            max-width: 700px;
+            box-shadow: 0 20px 50px rgba(209, 71, 105, 0.15); /* 強化卡片陰影立體感 */
+            transform-style: preserve-3d;
+        }
+
+        .scene-year {
+            font-size: 0.9rem;
+            color: var(--accent-pink);
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 25px;
+            color: var(--accent-pink);
+        }
+
+        .photo-placeholder {
+            width: 100%;
+            height: 350px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 15px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            border: 2px dashed #ff99ac;
+            background-size: cover;             /* 讓圖片保持比例填滿整個框框 */
+            background-position: center center; /* 把圖片對齊在正中間，避免主角被切掉 */
+            background-repeat: no-repeat;
+        }
+
+        p { font-size: 1.15rem; line-height: 1.8; color: var(--text-main); font-weight: 500; }
+
+        /* 生日節點特殊光效 */
+        .bday-card {
+            border: 3px solid var(--accent-pink);
+            background: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 40px rgba(214, 11, 62, 0.86);
+        }
+
+        .unlock-btn {
+            margin-top: 30px;
+            padding: 12px 35px;
+            background: linear-gradient(135deg, #d14769, #ff758c);
+            border: none;
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: 0.3s;
+            box-shadow: 0 5px 15px rgba(209, 71, 105, 0.4);
+        }
+
+        .unlock-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(209, 71, 105, 0.6);
+        }
+
+        /* 未來內容 */
+        #future-content { display: none; }
+
+        /* 滿版覆蓋層（生日動畫） */
+        #bday-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(255, 240, 243, 0.95), rgba(255, 204, 213, 0.95));
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .css-cake {
+            position: relative;
+            width: 150px;
+            height: 120px;
+            margin: 0 auto 30px;
+        }
+
+        .cake-tier {
+            background: #fff;
+            border-radius: 10px;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: inset 0 -10px rgba(0,0,0,0.1), 0 10px 20px rgba(209, 71, 105, 0.3);
+        }
+
+        .bottom-tier { width: 140px; height: 60px; z-index: 1; }
+        .top-tier { width: 100px; height: 50px; bottom: 60px; background: #ffccd5; z-index: 2; }
+
+        .candle {
+            position: absolute;
+            width: 12px; height: 35px;
+            background: repeating-linear-gradient(45deg, #fff, #fff 5px, #d14769 5px, #d14769 10px);
+            bottom: 110px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+        }
+
+        /* 搖曳的火焰 */
+        .flame {
+            position: absolute;
+            width: 16px; height: 24px;
+            background: #ffcc00;
+            border-radius: 50% 50% 20% 20%;
+            top: -28px; left: -2px;
+            box-shadow: 0 0 15px #ffcc00, 0 0 30px #ff6600;
+            animation: flicker 0.5s infinite alternate;
+        }
+
+        @keyframes flicker {
+            0% { transform: scale(1) rotate(-2deg); opacity: 0.9; }
+            100% { transform: scale(1.1) rotate(2deg); opacity: 1; box-shadow: 0 0 25px #ffcc00, 0 0 45px #ff6600; }
+        }
+        /* 問答輸入框樣式 */
+        #answer-input {
+            width: 80%;
+            max-width: 300px;
+            padding: 12px 20px;
+            font-size: 1.1rem;
+            font-family: inherit;
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.6);
+            border: 2px solid var(--accent-pink);
+            border-radius: 30px;
+            outline: none;
+            text-align: center;
+            transition: all 0.3s;
+            box-shadow: inset 0 2px 5px rgba(209, 71, 105, 0.1);
+        }
+
+        #answer-input:focus {
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 15px rgba(209, 71, 105, 0.4);
+            transform: scale(1.02);
+        }
+        .cake-icon { font-size: 6rem; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<div id="bday-overlay">
+    <div class="css-cake">
+        <div class="candle">
+            <div class="flame"></div>
+        </div>
+        <div class="cake-tier top-tier"></div>
+        <div class="cake-tier bottom-tier"></div>
+    </div>
+    <h1 id="bday-text" style="font-size: 3.5rem; margin-bottom: 20px; color: var(--accent-pink);">生日快樂，寶貝</h1>
+    <button class="unlock-btn" style="margin-top: 40px;" onclick="closeOverlay()">點擊返回浪漫旅程</button>
+</div>
+
+<div class="container">
+    <nav class="timeline-nav">
+        <div class="nav-line">
+            <div class="nav-node active" data-year="2025.06" onclick="goTo(0)"></div>
+            <div class="nav-node" data-year="2025.06" onclick="goTo(1)"></div>
+            <div class="nav-node" data-year="2025.10" onclick="goTo(2)"></div>
+            <div class="nav-node" data-year="2025.12" onclick="goTo(3)"></div>
+            <div class="nav-node" data-year="2026.01" onclick="goTo(4)"></div>
+            <div class="nav-node" data-year="2026.02" onclick="goTo(5)"></div>
+            <div class="nav-node" data-year="2026.03" onclick="goTo(6)"></div>
+            <div class="nav-node" data-year="2026.04.22" onclick="goTo(7)"></div>
+            <div id="future-node" class="nav-node" style="opacity: 0.3; border-color: #ccc; background: #eee;" data-year="Future"></div>
+        </div>
+    </nav>
+
+    <main class="main-space">
+        <section id="s0" class="scene">
+            <div class="glass-card">
+                <div class="scene-year">START / 2025.06</div>
+                <h2>偶遇</h2>
+                <div class="photo-placeholder" style="background-image: url('Gemini_Generated_Image_2vm2z62vm2z62vm2.png');"></div>
+                <p>在墨竹亭偶遇，寶貝穿著白色洋裝，笑容活潑，可可愛愛。</p>
+            </div>
+        </section>
+
+        <section id="s1" class="scene">
+            <div class="glass-card">
+                <div class="scene-year">NIGHT VIEWS / 2025.06</div>
+                <h2>文化大學夜景</h2>
+                <div class="photo-placeholder" style="background-image: url('Gemini_Generated_Image_d4e2f3d4e2f3d4e2.png');"></div>
+                <p>第一次跟寶貝一起欣賞文化大學的夜景，那時的我們還不知道未來會有這麼多美好的回憶。</p>
+            </div>
+        </section>
+
+        <section id="s2" class="scene">
+            <div class="glass-card">
+                <div class="scene-year">RUN / 2025.10</div>
+                <h2>10k初體驗</h2>
+                <p>第一次跟寶貝參加路跑，一切都是那麼新奇，途中有吃到各種食物，有寶貝帶領我很安心，最後安全完賽真的超級開心。</p>
+                <p>雖然發生了人生第一場車禍，但寶貝很有耐心的陪我處理安慰我，半夜兩點才回到飯店，但是寶貝沒有責怪我，謝謝寶貝。</p>
+            </div>
+        </section>
+
+        <section id="s3" class="scene">
+            <div class="glass-card">
+                <div class="scene-year">XMAS / 2025.12</div>
+                <h2>新北耶誕城</h2>
+                <div class="photo-placeholder" style="background-image: url('Gemini_Generated_Image_kc49ulkc49ulkc49.png');"></div>
+                <p>第一次與寶貝逛耶誕城，雖然我忘記那天看到什麼，但我記得寶貝穿著可愛灰色洋裝，還有開心幸福的心情。</p>
+            </div>
+        </section> 
+
+        <section id="s4" class="scene">
+            <div class="glass-card">
+                <div class="scene-year">HONG KONG / 2026.01</div>
+                <h2>香港跨年</h2>
+                <div class="photo-placeholder" style="background-image: url('Gemini_Generated_Image_4xi8ky4xi8ky4xi8.png');"></div>
+                <p>第一次出國，寶貝帶我去香港跨年，有吃不完的港式，走不完的路，還有搭船夜遊維多里亞港，好想把時間定格在那。</p>
+            </div>
+        </section>
+
+        <section id="s5" class="scene">
+            <div class="glass-card">
+                <div class="scene-year">V-Day / 2026.02</div>
+                <h2>Valentine's Day </h2>
+                <div class="photo-placeholder" style="background-image: url('Gemini_Generated_Image_hxf69rhxf69rhxf6.png');"></div>
+                <p>第一個情人節，我們在家煮紅酒燉牛肉，享受彼此的陪伴。</p>
+                <p>寶貝送給我杯墊和珪藻土墊，都是我需要的，寶貝肯定都在觀察我的生活，想著寶貝在注視我就超幸福。</p>
+            </div>
+        </section>
+
+        <section id="s6" class="scene">
+            <div class="glass-card">
+                <div class="scene-year">RUN / 2026.03</div>
+                <h2>國道馬初體驗</h2>
+                <div class="photo-placeholder" style="background-image: url('IMG_6448.JPEG');"></div>
+                <p>第一次挑戰國道馬拉松，凌晨起床，當時外面好冷，我們慢跑熱身到起點，雖然跑步過程艱辛，但有妳在身邊，一切都變得值得。未來的路還很長，我會繼續陪在妳身邊，一起面對每一個挑戰。</p>
+                <p>當天也是我的生日，剛剛跑完半馬，腳超級酸，但心裡滿滿都是幸福。跟寶貝吃貳樓還有印度料理，寶貝送我的筋膜槍和生日卡片，都好喜歡。</p>
+            </div>
+        </section>
+    
+        <section id="s7" class="scene">
+            <div class="glass-card bday-card">
+                <div class="scene-year">HAPPY BIRTHDAY / 2026.04.22</div>
+                <h2>寶貝的生日</h2>
+                <p>寶貝這是你與我共度的第一個生日，本來已規劃好要帶你去放鬆身體，吃好吃的生日餐，卻因為我受傷，我們被迫分離兩地，但我不想錯過你的生日，所以我決定在這裡為你慶祝，雖然這個生日有點特別，但我希望它能成為我們回憶中最獨特的一頁。未來的日子裡，我會努力康復，爭取更多的時間陪伴你，創造更多美好的回憶。生日快樂，我的寶貝！</p>
+                <div id="quiz-container" style="margin-top: 30px;">
+                <p style="font-size: 1.1rem; font-weight: bold; color: var(--accent-pink); margin-bottom: 10px;">
+                    🔑 Q：<br>我們是怎麼相遇的？(在'什麼地點''方式')
+                </p>
+                
+                <input type="text" id="answer-input" placeholder="請輸入答案..." autocomplete="off">
+                
+                <button class="unlock-btn" onclick="checkAnswer()" style="margin-top: 15px;">驗證並解鎖</button>
+                
+                <p id="error-msg" style="color: #ff4d4d; font-weight: bold; display: none; margin-top: 10px; font-size: 0.95rem;">
+                    密碼錯誤，請再回憶一下！
+                </p>
+                </div>
+            </div>
+        </section>
+
+        <div id="future-content">
+            <section id="s8" class="scene">
+                <div class="glass-card">
+                    <div class="scene-year">FUTURE / 2026 - 2125</div>
+                    <h2></h2>
+                    <p>
+                    </p>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<script>
+    gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+    /**/
+    // 2. 升級版：景深光斑 (Bokeh) 粒子系統
+// 升級版：多形狀、多色彩的浪漫粒子系統
+    const canvas = document.getElementById('starfield');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let mouse = { x: 0, y: 0 };
+
+    // 定義浪漫調色盤 (RGB格式)
+    const colorPalette = [
+        '255, 255, 255',   // 純白 (亮點)
+        '255, 171, 145',   // 蜜桃橘
+        '255, 204, 213',   // 櫻花粉
+        '244, 143, 177'    // 玫瑰粉
+    ];
+
+    // 定義形狀種類
+    const shapeTypes = ['heart', 'sparkle', 'bokeh'];
+
+    function initParticles() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        particles = [];
+        // 數量維持在 80 顆左右，確保畫面華麗但不雜亂
+        for (let i = 0; i < 60; i++) { 
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 12 + 10, // 隨機大小 4px ~ 16px
+                opacity: Math.random() * 0.6 + 0.2,
+                speedY: Math.random() * -0.6 - 0.2, // 緩慢向上漂浮
+                speedX: Math.random() * 0.4 - 0.2,
+                // 隨機賦予顏色與形狀
+                color: colorPalette[Math.floor(Math.random() * colorPalette.length)],
+                shape: shapeTypes[Math.floor(Math.random() * shapeTypes.length)],
+                // 加上旋轉角度，讓星星和愛心更生動
+                // angle: Math.random() * Math.PI * 2,
+                // rotationSpeed: (Math.random() - 0.5) * 0.02
+            });
+        }
+    }
+
+    function drawParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+            // 視差偏移
+            let ox = (mouse.x - canvas.width / 2) * 0.015;
+            let oy = (mouse.y - canvas.height / 2) * 0.015;
+            
+            p.y += p.speedY;
+            p.x += p.speedX;
+            p.angle += p.rotationSpeed; // 讓粒子緩慢旋轉
+
+            // 越界重置邏輯
+            if (p.y < -50) { p.y = canvas.height + 50; p.x = Math.random() * canvas.width; }
+            if (p.x < -50) { p.x = canvas.width + 50; }
+            if (p.x > canvas.width + 50) { p.x = -50; }
+            
+            ctx.save();
+            ctx.translate(p.x + ox, p.y + oy);
+            ctx.rotate(p.angle);
+
+            // 設定發光漸層特效 (羽化效果)
+            let gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, p.size);
+            gradient.addColorStop(0, `rgba(${p.color}, ${p.opacity})`);
+            gradient.addColorStop(1, `rgba(${p.color}, 0)`);
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+
+            // 根據形狀屬性繪製不同圖形
+            switch(p.shape) {
+                case 'bokeh': // 圓形光斑
+                    ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+                    break;
+                case 'heart': // Q版愛心 (使用貝茲曲線繪製)
+                    let r = p.size * 0.8;
+                    ctx.moveTo(0, r / 4);
+                    ctx.bezierCurveTo(r, -r / 2, r * 2, r / 3, 0, r * 1.2);
+                    ctx.bezierCurveTo(-r * 2, r / 3, -r, -r / 2, 0, r / 4);
+                    break;
+                case 'sparkle': // 四角星芒
+                    let s = p.size;
+                    ctx.moveTo(0, -s);
+                    ctx.quadraticCurveTo(0, 0, s, 0);
+                    ctx.quadraticCurveTo(0, 0, 0, s);
+                    ctx.quadraticCurveTo(0, 0, -s, 0);
+                    ctx.quadraticCurveTo(0, 0, 0, -s);
+                    break;
+            }
+
+            ctx.fill();
+            ctx.restore();
+        });
+        requestAnimationFrame(drawParticles);
+    }
+
+    // 監聽滑鼠與視窗大小改變
+    window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    window.addEventListener('resize', initParticles);
+    
+    // 初始化並開始動畫
+    initParticles();
+    drawParticles();
+
+    // =============== 下方的 GSAP 滾動動畫邏輯保持不變 ===============
+
+    // 滾動動畫處理
+    const cards = gsap.utils.toArray(".glass-card");
+    cards.forEach((card, i) => {
+        gsap.from(card, {
+            scrollTrigger: {
+                trigger: card,
+                start: "top 85%",
+                toggleActions: "play none none reverse"
+            },
+            opacity: 0,
+            y: 100,
+            rotationX: -10,
+            duration: 1.5,
+            ease: "power3.out"
+        });
+    });
+
+    // 導覽節點高亮
+    const nodes = document.querySelectorAll(".nav-node");
+    const sections = gsap.utils.toArray("section");
+
+    sections.forEach((sec, i) => {
+        ScrollTrigger.create({
+            trigger: sec,
+            start: "top center",
+            end: "bottom center",
+            onToggle: self => {
+                if (self.isActive) {
+                    nodes.forEach(n => n.classList.remove("active"));
+                    if(nodes[i]) nodes[i].classList.add("active");
+                    if(sec.id === 's7') triggerBday();
+                }
+            }
+        });
+    });
+
+    function goTo(idx) {
+        gsap.to(window, { duration: 1.5, scrollTo: "#s" + idx, ease: "power2.inOut" });
+    }
+
+    // 生日驚喜
+    let bdayTriggered = false;
+    function triggerBday() {
+        if (bdayTriggered) return;
+        bdayTriggered = true;
+        const overlay = document.getElementById('bday-overlay');
+        overlay.style.display = 'flex';
+        gsap.from("#bday-text", { scale: 0.5, opacity: 0, duration: 1, ease: "back.out(1.7)" });
+    }
+
+    function closeOverlay() {
+        gsap.to("#bday-overlay", { opacity: 0, duration: 0.5, onComplete: () => {
+            document.getElementById('bday-overlay').style.display = 'none';
+        }});
+    }
+
+// 檢查問答答案
+    function checkAnswer() {
+        // 抓取輸入框裡的值，並去除前後空白 (.trim())
+        const inputBox = document.getElementById('answer-input');
+        const userAnswer = inputBox.value.trim();
+
+        // 設定你允許的正確答案（可同時支援多種寫法，避免她打字習慣不同）
+        const correctAnswers = ["在墨竹亭偶遇"];
+
+        // 判斷是否答對
+        if (correctAnswers.includes(userAnswer)) {
+            // 答對了！隱藏整個問答區塊
+            document.getElementById('quiz-container').style.display = 'none';
+            
+            // 呼叫原本的解鎖函數，進入未來！
+            unlockFuture(); 
+        } else {
+            // 答錯了！顯示錯誤提示
+            const errorMsg = document.getElementById('error-msg');
+            errorMsg.style.display = 'block';
+            
+            // 讓輸入框震動一下提示錯誤 (加上一點 GSAP 特效)
+            gsap.fromTo(inputBox, 
+                { x: -10 }, 
+                { x: 10, duration: 0.1, yoyo: true, repeat: 5, onComplete: () => gsap.to(inputBox, {x: 0}) }
+            );
+
+            // 2.5 秒後自動隱藏錯誤提示
+            setTimeout(() => {
+                errorMsg.style.display = 'none';
+            }, 2500);
+        }
+    }
+
+    // 解鎖未來
+    function unlockFuture() {
+        const futureContent = document.getElementById('future-content');
+        futureContent.style.display = 'block';
+        
+        const fNode = document.getElementById('future-node');
+        fNode.style.opacity = "1";
+        fNode.style.borderColor = "#ff99ac";
+        fNode.style.background = "#fff";
+        fNode.onclick = () => goTo(7);
+        
+        ScrollTrigger.refresh();
+        
+        gsap.to(window, { duration: 1, scrollTo: "#s8", ease: "power4.out" });
+    }
+</script>
+
+</body>
+</html>
